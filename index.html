@@ -4,6 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Barycentre – Où se retrouver en France</title>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
 :root{--bg:#f3f5f1;--card:#fff;--ink:#1c2420;--mut:#5d6b63;--line:#d5dbd4;--acc:#1f6f55;--acc2:#c8512b;--map:#e4ebe3;
 box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
@@ -74,11 +75,12 @@ svg{width:100%;height:auto;display:block}
 <div class="scroll" id="tbl"></div>
 <p class="hint" id="src"></p>
 </div>
-<div class="card"><svg id="map" viewBox="0 0 740 700" role="img" aria-label="Carte de France avec les participants et le lieu recommandé"></svg></div>
+<div class="card" style="padding:0;overflow:hidden"><div id="lmap" style="height:520px"></div><svg id="fb" viewBox="0 0 740 700" style="display:none" role="img" aria-label="Carte de France"></svg></div>
 </div>
 </div>
 <datalist id="dl"></datalist>
 </main>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
 <script>
 const RAW="Paris,48.857,2.352;Marseille,43.296,5.370;Lyon,45.764,4.836;Toulouse,43.605,1.444;Nice,43.710,7.262;Nantes,47.218,-1.554;Montpellier,43.611,3.877;Strasbourg,48.573,7.752;Bordeaux,44.838,-0.579;Lille,50.629,3.057;Rennes,48.117,-1.678;Reims,49.258,4.032;Le Havre,49.494,0.108;Saint-Étienne,45.439,4.387;Toulon,43.124,5.928;Grenoble,45.189,5.725;Dijon,47.322,5.041;Angers,47.478,-0.563;Nîmes,43.837,4.360;Clermont-Ferrand,45.777,3.087;Le Mans,48.006,0.199;Aix-en-Provence,43.530,5.447;Brest,48.390,-4.486;Tours,47.394,0.684;Amiens,49.894,2.296;Limoges,45.833,1.261;Annecy,45.899,6.129;Perpignan,42.699,2.895;Metz,49.119,6.176;Besançon,47.238,6.024;Orléans,47.903,1.909;Rouen,49.443,1.099;Mulhouse,47.750,7.336;Caen,49.182,-0.371;Nancy,48.693,6.184;Avignon,43.949,4.806;Poitiers,46.580,0.340;La Rochelle,46.160,-1.152;Pau,43.295,-0.371;Bayonne,43.493,-1.475;Valence,44.933,4.892;Chambéry,45.565,5.918;Troyes,48.297,4.074;Bourges,47.081,2.399;Nevers,46.990,3.159;Le Puy-en-Velay,45.043,3.885;Aurillac,44.926,2.440;Rodez,44.350,2.575;Albi,43.929,2.148;Cahors,44.448,1.441;Brive-la-Gaillarde,45.159,1.532;Périgueux,45.184,0.722;Angoulême,45.649,0.156;Niort,46.324,-0.459;Vannes,47.658,-2.760;Quimper,47.997,-4.097;Saint-Brieuc,48.514,-2.760;Cherbourg,49.634,-1.622;Laval,48.070,-0.770;Chartres,48.447,1.489;Auxerre,47.798,3.573;Mâcon,46.307,4.829;Lons-le-Saunier,46.675,5.555;Épinal,48.173,6.450;Charleville-Mézières,49.762,4.720;Arras,50.292,2.777;Dunkerque,51.034,2.377;Carcassonne,43.213,2.349;Gap,44.559,6.079;Digne-les-Bains,44.092,6.236;Cannes,43.553,7.017;Montluçon,46.340,2.603;Vichy,46.128,3.426;Roanne,46.034,4.068;Tarbes,43.233,0.078;Agen,44.203,0.616;Mont-de-Marsan,43.890,-0.500;Blois,47.586,1.335;Colmar,48.079,7.358;Alès,44.125,4.081;Fuveau,43.455,5.558";
 const C=RAW.split(";").map(s=>{const a=s.split(",");return{n:a[0],la:+a[1],lo:+a[2]}});
@@ -208,14 +210,33 @@ TOP=R.slice(0,5);if(sel>4)sel=0;
 $("best").textContent=TOP[0].c.n;$("poi").textContent=D[TOP[0].c.n]||"";
 $("tbl").innerHTML=`<table class="res"><tr><th>Ville</th>${V.map(p=>`<th>${p.n?esc(p.n)+'<small style="display:block;font-weight:400;color:var(--mut)">'+p.c+"</small>":p.c}</th>`).join("")}<th>Total</th></tr>${TOP.map((r,i)=>`<tr data-i="${i}" class="${i===sel?"on":""}" onclick="sel=${i};run()"><td><b>${r.c.n}</b></td>${r.t.map(fmt).map(x=>`<td>${x}</td>`).join("")}<td>${fmt(r.t.reduce((a,x)=>a+x,0))}</td></tr>`).join("")}</table>`;
 draw(V)}
-function draw(V){
+function drawSvg(V){
 let s=`<polygon class="fr" points="${OUT.map(p=>X(p[0])+","+Y(p[1])).join(" ")}"/>`;
 s+=C.map(c=>`<circle cx="${X(c.lo)}" cy="${Y(c.la)}" r="2.5" fill="var(--line)"/>`).join("");
 const t=TOP[sel];
 if(t){V.forEach(p=>{const a=B[p.c];s+=`<line x1="${X(a.lo)}" y1="${Y(a.la)}" x2="${X(t.c.lo)}" y2="${Y(t.c.la)}" stroke="var(--acc)" stroke-width="2" stroke-dasharray="6 4"/>`})}
 V.forEach(p=>{const a=B[p.c];s+=`<circle cx="${X(a.lo)}" cy="${Y(a.la)}" r="7" fill="var(--acc)"/><text x="${X(a.lo)+10}" y="${Y(a.la)-8}" font-size="15" fill="var(--ink)">${esc(p.n||p.c)}</text>`});
 if(t)s+=`<circle cx="${X(t.c.lo)}" cy="${Y(t.c.la)}" r="11" fill="var(--acc2)" stroke="var(--card)" stroke-width="3"/><text x="${X(t.c.lo)+14}" y="${Y(t.c.la)+22}" font-size="17" font-weight="700" fill="var(--acc2)">${t.c.n}</text>`;
-$("map").innerHTML=s}
+$("fb").innerHTML=s}
+let LM,LG,rtok=0;const RC=new Map();
+function draw(V){
+if(!window.L){$("fb").style.display="block";$("lmap").style.display="none";return drawSvg(V)}
+if(!LM){LM=L.map("lmap").setView([46.6,2.4],6);L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,attribution:"© OpenStreetMap"}).addTo(LM);LG=L.layerGroup().addTo(LM)}
+LG.clearLayers();const t=TOP[sel],pts=[];
+V.forEach(p=>{const a=B[p.c];pts.push([a.la,a.lo]);L.circleMarker([a.la,a.lo],{radius:7,color:"#fff",weight:2,fillColor:"#1f6f55",fillOpacity:1}).bindTooltip(esc(p.n||p.c),{permanent:true,direction:"right"}).addTo(LG)});
+if(!t){if(pts.length)LM.fitBounds(pts,{padding:[40,40],maxZoom:8});return}
+pts.push([t.c.la,t.c.lo]);
+L.circleMarker([t.c.la,t.c.lo],{radius:11,color:"#fff",weight:3,fillColor:"#c8512b",fillOpacity:1}).bindTooltip("<b>"+t.c.n+"</b>",{permanent:true,direction:"top"}).addTo(LG);
+LM.fitBounds(pts,{padding:[40,40]});
+const my=++rtok;
+V.forEach(p=>{if(p.c===t.c.n)return;const a=B[p.c],key=p.c+"|"+t.c.n;
+const add=ll=>{if(my===rtok)L.polyline(ll,{color:"#c8512b",weight:4,opacity:.85}).addTo(LG)};
+const line=[[a.la,a.lo],[t.c.la,t.c.lo]];
+if(RC.has(key))return add(RC.get(key));
+if(!ORS_KEY){RC.set(key,line);return add(line)}
+fetch("https://api.openrouteservice.org/v2/directions/driving-car/geojson",{method:"POST",headers:{"Authorization":ORS_KEY,"Content-Type":"application/json"},body:JSON.stringify({coordinates:[[a.lo,a.la],[t.c.lo,t.c.la]]})})
+.then(r=>r.ok?r.json():Promise.reject()).then(g=>{const ll=g.features[0].geometry.coordinates.map(c=>[c[1],c[0]]);RC.set(key,ll);add(ll)})
+.catch(()=>{RC.set(key,line);add(line)})})}
 $("add").onclick=()=>{P.push({n:"",c:"",w:1});run()};
 function setMode(m){mode=m;sel=0;$("m1").setAttribute("aria-pressed",m==="sum");$("m2").setAttribute("aria-pressed",m==="eq");run()}
 $("m1").onclick=()=>setMode("sum");$("m2").onclick=()=>setMode("eq");
