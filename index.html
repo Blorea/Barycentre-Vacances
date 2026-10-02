@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Barycentre – Où se retrouver en France</title>
+<title>Barycentre v4 – Où se retrouver en France</title>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css">
 <style>
 :root{--bg:#f3f5f1;--card:#fff;--ink:#1c2420;--mut:#5d6b63;--line:#d5dbd4;--acc:#1f6f55;--acc2:#c8512b;--map:#e4ebe3;
@@ -40,7 +40,7 @@ button:focus-visible,input:focus-visible,select:focus-visible{outline:2px solid 
 .res tr[data-i]{cursor:pointer}
 .res tr.on{background:var(--map)}
 .scroll{overflow-x:auto}
-svg{width:100%;height:auto;display:block}
+#fb{width:100%;height:auto;display:block}
 .fr{fill:var(--map);stroke:var(--line);stroke-width:2}
 .row>*{min-width:0}
 .poi{margin:4px 0 12px;color:var(--mut);font-style:italic}.poi:empty{display:none}
@@ -49,7 +49,7 @@ svg{width:100%;height:auto;display:block}
 </head>
 <body>
 <main>
-<h1>Barycentre</h1>
+<h1>Barycentre <small id="ver" style="font:600 .9rem 'Trebuchet MS',sans-serif;color:var(--mut);vertical-align:middle">v4</small></h1>
 <p class="sub">Trouvez la ville de rendez-vous qui minimise le temps de route en voiture entre des personnes réparties en France.</p>
 <div class="grid">
 <div>
@@ -77,6 +77,15 @@ svg{width:100%;height:auto;display:block}
 </div>
 <div class="card" style="padding:0;overflow:hidden"><div id="lmap" style="height:520px"></div><svg id="fb" viewBox="0 0 740 700" style="display:none" role="img" aria-label="Carte de France"></svg></div>
 </div>
+</div>
+<div class="card">
+<h2>Historique des versions</h2>
+<ul style="margin:0;padding-left:20px">
+<li><b>v4</b> – 02/10/2026 à 10:10 (heure de Paris) : correction de l'affichage des marqueurs et des itinéraires sur la carte (un style de la page les rendait invisibles).</li>
+<li><b>v3</b> – 02/10/2026 à 10:08 (heure de Paris) : numéro de version dans le titre, ajout de cet historique, et message affiché si la carte interactive ne peut pas se charger.</li>
+<li><b>v2</b> – 02/10/2026 à 09:59 : vraie carte OpenStreetMap (zoom et déplacement) avec les itinéraires routiers réels d'OpenRouteService.</li>
+<li><b>v1</b> – 02/10/2026 à 08:59 : première mise en ligne sur GitHub, avec les temps de trajet réels d'OpenRouteService pour toutes les villes (repli sur l'estimation si le service est indisponible).</li>
+</ul>
 </div>
 <datalist id="dl"></datalist>
 </main>
@@ -220,7 +229,7 @@ if(t)s+=`<circle cx="${X(t.c.lo)}" cy="${Y(t.c.la)}" r="11" fill="var(--acc2)" s
 $("fb").innerHTML=s}
 let LM,LG,rtok=0;const RC=new Map();
 function draw(V){
-if(!window.L){$("fb").style.display="block";$("lmap").style.display="none";return drawSvg(V)}
+if(!window.L){$("src").textContent+=" Carte interactive indisponible (bibliothèque non chargée).";$("fb").style.display="block";$("lmap").style.display="none";return drawSvg(V)}
 if(!LM){LM=L.map("lmap").setView([46.6,2.4],6);L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png",{maxZoom:18,attribution:"© OpenStreetMap"}).addTo(LM);LG=L.layerGroup().addTo(LM)}
 LG.clearLayers();const t=TOP[sel],pts=[];
 V.forEach(p=>{const a=B[p.c];pts.push([a.la,a.lo]);L.circleMarker([a.la,a.lo],{radius:7,color:"#fff",weight:2,fillColor:"#1f6f55",fillOpacity:1}).bindTooltip(esc(p.n||p.c),{permanent:true,direction:"right"}).addTo(LG)});
